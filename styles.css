@@ -1,0 +1,53 @@
+body {
+  max-width: 1400px;
+  margin: 0 auto 3rem;
+}
+#img-orig {
+  width: 100%;
+}
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  column-gap: 5rem;
+  row-gap: 3rem;
+  column-gap: 3rem;
+}
+
+.grid-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inputs-list {
+  margin-top: 1rem;
+
+  display: flex;
+  gap: 0.5rem;
+}
+.img-interaction {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+/* LEGEND */
+.heatmap-legend {
+  display: inline-block;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.heatmap-legend-item {
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  background-color: #000000;
+}
