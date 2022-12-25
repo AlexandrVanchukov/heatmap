@@ -47,12 +47,14 @@
       <div class="grid-cell">
         <h3>Heatmap</h3>
         <canvas id="canvas-hm-gs" class="image-canvas"></canvas>
-        <button
-                type="button"
-                onclick="downloadImg()"
-        >
-          Скачать
-        </button>
+        <div class="inputs-list">
+          <button
+                  type="button"
+                  onclick="downloadImg()"
+          >
+            Скачать
+          </button>
+        </div>
       </div>
     </div>
     <div style="width: 100%">
@@ -204,8 +206,13 @@
       makeHeatmap(canvas1, canvas2, heatmapCanvas);
     }
 
-    function downloadImg(){
-
+    function downloadImg() {
+      const canvasImage = document.getElementById('canvas-hm-gs');
+      const dataURL = canvasImage.toDataURL("image/jpeg");
+      const link = document.createElement("a");
+      link.href = dataURL;
+      link.download = "image.png";
+      link.click();
     }
   </script>
 </html>
