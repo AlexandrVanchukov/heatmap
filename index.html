@@ -42,11 +42,23 @@
       <div class="grid-cell">
         <h3>Lab4</h3>
         <canvas id="canvas-ns" class="image-canvas"></canvas>
+        <button
+                type="button"
+                onclick="addPhImg()"
+        >
+          Photoshop
+        </button>
       </div>
 
       <div class="grid-cell">
         <h3>Heatmap</h3>
         <canvas id="canvas-hm-gs" class="image-canvas"></canvas>
+        <button
+                type="button"
+                onclick="addGsImg()"
+        >
+          Grayscale
+        </button>
       </div>
     </div>
     <div style="width: 100%">
@@ -72,6 +84,134 @@
     const hmMaxDiffColor = [255, 0, 0];
     const hmMinDiffColor = [0, 255, 0];
 
+    const imgOrig = document.querySelector('#img-orig');
+    document.querySelectorAll('canvas').forEach((canvas) => {
+      const parentRect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = parentRect.width;
+      canvas.height = (imgOrig.height / imgOrig.width) * canvas.width;
+    });
+
+    const gsCanvas = document.querySelector('#canvas-gs');
+    const imgGs = document.querySelector('#img-gs');
+    console.log(imgGs);
+    putImage(gsCanvas, imgGs);
+
+    const nsCanvas = document.querySelector('#canvas-ns');
+    const imgNs = document.querySelector('#img-ns');
+    console.log(imgNs);
+    putImage(nsCanvas, imgNs);
+
+
+    {
+      const legendList = document.querySelector('.heatmap-legend');
+      const children = legendList.children;
+
+      let i = 0;
+      for (const child of children) {
+
+        const [r, g, b] = getHmColor(i / children.length);
+
+        child.style.background = `rgba(${r}, ${g}, ${b}, 255)`;
+        i++;
+      }
+    }
+
+    function getHmColor(diffCoef) {
+      if (diffCoef >= 1) return [...hmMaxDiffColor];
+      if (diffCoef <= 0) return [...hmMinDiffColor];
+
+      const r = (hmMaxDiffColor[0] - hmMinDiffColor[0]) * diffCoef + hmMinDiffColor[0];
+      const g = (hmMaxDiffColor[1] - hmMinDiffColor[1]) * diffCoef + hmMinDiffColor[1];
+      const b = (hmMaxDiffColor[2] - hmMinDiffColor[2]) * diffCoef + hmMinDiffColor[2];
+
+      return [r, g, b];
+    }
+
+    function putImage(canvas, img) {
+      const context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+
+
+    function getPixelData(imageData, pixelIndex) {
+      return [
+        imageData[pixelIndex * 4],
+        imageData[pixelIndex * 4 + 1],
+        imageData[pixelIndex * 4 + 2],
+        imageData[pixelIndex * 4 + 3],
+      ];
+    }
+    function setPixel(imageData, pixelIndex, [r, g, b, a]) {
+      if (r < 0) r = 0;
+      if (r > 255) r = 255;
+      if (g < 0) g = 0;
+      if (g > 255) g = 255;
+      if (b < 0) b = 0;
+      if (b > 255) b = 255;
+      if (a < 0) a = 0;
+      if (a > 255) a = 255;
+
+      imageData[pixelIndex * 4] = r;
+      imageData[pixelIndex * 4 + 1] = g;
+      imageData[pixelIndex * 4 + 2] = b;
+      imageData[pixelIndex * 4 + 3] = a;
+    }
+    function getMinMax(array) {
+      let min = array[0];
+      let max = array[0];
+
+      for (let i = 0; i < array.length; i++) {
+        if (min > array[i]) min = array[i];
+        if (max < array[i]) max = array[i];
+      }
+
+      return [min, max];
+    }
+
+    function setImageData(canvas, imageData) {
+      const context = canvas.getContext('2d');
+      context.putImageData(new ImageData(imageData, canvas.width), 0, 0);
+    }
+
+    function makeHeatmap(canvas1, canvas2, heatmapCanvas) {
+      const context1 = canvas1.getContext('2d');
+      const imageData1 = context1.getImageData(0, 0, canvas1.width, canvas1.height).data;
+
+      const context2 = canvas2.getContext('2d');
+      const imageData2 = context2.getImageData(0, 0, canvas2.width, canvas2.height).data;
+
+      const heatmapValues = [];
+      const pixelCount = imageData1.length / 4;
+      for (let i = 0; i < pixelCount; i++) {
+        const color1 = getPixelData(imageData1, i)[0];
+        const color2 = getPixelData(imageData2, i)[0];
+
+        heatmapValues.push(Math.floor(Math.abs(color1 - color2)));
+      }
+
+      const [minDiff, maxDiff] = getMinMax(heatmapValues);
+
+      const heatmapImageData = new Uint8ClampedArray(imageData1.length);
+      for (let i = 0; i < heatmapValues.length; i++) {
+        const heatmapCoef =
+                maxDiff - minDiff === 0 ? 1 : (heatmapValues[i] - minDiff) / (maxDiff - minDiff);
+        const hmRgb = getHmColor(heatmapCoef);
+
+        setPixel(heatmapImageData, i, [...hmRgb, 255]);
+      }
+
+      setImageData(heatmapCanvas, heatmapImageData);
+    }
+
+    function makeHeatmapBySelectors(canvas1Selector, canvas2Selector, heatmapCanvasSelector) {
+      const canvas1 = document.querySelector(canvas1Selector);
+      const canvas2 = document.querySelector(canvas2Selector);
+      const heatmapCanvas = document.querySelector(heatmapCanvasSelector);
+      makeHeatmap(canvas1, canvas2, heatmapCanvas);
+    }
+    /*const hmMaxDiffColor = [255, 0, 0];
+    const hmMinDiffColor = [0, 255, 0];
+
     const imgOrig = document.getElementById('img-orig');
 
     let cgs = document.getElementById('canvas-gs');
@@ -91,10 +231,9 @@
 
     const imgNs = document.getElementById('img-ns');
     console.log(imgNs);
-    putImage(, imgNs);
+    putImage(cns, imgNs);
     const context = cns.getContext('2d');
     context.drawImage(img, 0, 0, canvas.width, canvas.height);
-
 
     {
       const legendList = document.querySelector('.heatmap-legend');
@@ -201,6 +340,6 @@
       const canvas2 = document.querySelector(canvas2Selector);
       const heatmapCanvas = document.querySelector(heatmapCanvasSelector);
       makeHeatmap(canvas1, canvas2, heatmapCanvas);
-    }
+    }*/
   </script>
 </html>
